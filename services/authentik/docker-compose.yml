@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  postgresql:
+    image: postgres:15
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.0.25:514"
+        tag: "{{.Name}}"
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${AUTHENTIK_DB_PASSWORD}
+      POSTGRES_USER: authentik
+      POSTGRES_DB: authentik
+    volumes:
+      - ./database:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.0.25:514"
+        tag: "{{.Name}}"
+    restart: unless-stopped
+
+  server:
+    image: ghcr.io/goauthentik/server:latest
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.0.25:514"
+        tag: "{{.Name}}"
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_DB_PASSWORD}
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_HOST: https://auth.vtmn.internal
+    volumes:
+      - ./media:/media
+      - ./custom-templates:/templates
+      - ./blueprints/local:/blueprints/local
+    depends_on:
+      - postgresql
+      - redis
+    ports:
+      - "9000:9000"
+
+  worker:
+    image: ghcr.io/goauthentik/server:latest
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.0.25:514"
+        tag: "{{.Name}}"
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_DB_PASSWORD}
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_HOST: https://auth.vtmn.internal
+    volumes:
+      - ./media:/media
+      - ./custom-templates:/templates
+      - ./blueprints/local:/blueprints/local
+    depends_on:
+      - postgresql
+      - redis

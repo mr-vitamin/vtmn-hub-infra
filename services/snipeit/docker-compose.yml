@@ -1,0 +1,48 @@
+services:
+  snipeit:
+    image: snipe/snipe-it:latest
+    container_name: snipeit
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.0.25:514"
+        tag: "{{.Name}}"
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${SNIPEIT_APP_KEY}
+      APP_URL: https://inventory.vtmn.internal
+      APP_TIMEZONE: America/Denver
+      DB_CONNECTION: mysql
+      DB_HOST: snipeit-db
+      DB_DATABASE: snipeit
+      DB_USERNAME: snipeit
+      DB_PASSWORD: ${SNIPEIT_DB_PASSWORD}
+    depends_on:
+      - snipeit-db
+    volumes:
+      - snipeit_data:/var/lib/snipeit
+
+  snipeit-db:
+    image: mariadb:10.11
+    container_name: snipeit-db
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.0.25:514"
+        tag: "{{.Name}}"
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SNIPEIT_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: snipeit
+      MYSQL_USER: snipeit
+      MYSQL_PASSWORD: ${SNIPEIT_DB_PASSWORD}
+    volumes:
+      - snipeit_db:/var/lib/mysql
+
+volumes:
+  snipeit_data:
+  snipeit_db:

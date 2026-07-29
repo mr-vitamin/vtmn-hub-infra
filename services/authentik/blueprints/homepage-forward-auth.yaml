@@ -1,0 +1,32 @@
+version: 1
+metadata:
+  name: homepage-forward-auth
+entries:
+  - model: authentik_providers_proxy.proxyprovider
+    id: homepage-provider
+    identifiers:
+      name: homepage-proxy-provider
+    attrs:
+      mode: forward_single
+      external_host: https://hub.vtmn.internal
+      internal_host: http://192.168.0.56:3001
+      internal_host_ssl_validation: false
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
+  - model: authentik_core.application
+    identifiers:
+      slug: homepage
+    attrs:
+      name: Homepage
+      provider: !KeyOf homepage-provider
+      policy_engine_mode: any
+
+  - model: authentik_outposts.outpost
+    identifiers:
+      name: authentik Embedded Outpost
+    attrs:
+      providers:
+        - !Find [authentik_core.provider, [name, docs-proxy-provider]]
+        - !Find [authentik_core.provider, [name, snipeit-proxy-provider]]
+        - !KeyOf homepage-provider

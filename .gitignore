@@ -1,0 +1,14 @@
+# Never commit actual secrets
+.env
+*.env
+!.env.example
+
+# Certificates and keys (the internal CA private key and issued certs live only on the server / owner's machine)
+*.key
+*.pem
+!*.example.pem
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+*.swp

@@ -1,0 +1,9 @@
+version: 1
+metadata:
+  name: hub-branding
+entries:
+  - model: authentik_brands.brand
+    identifiers:
+      domain: authentik-default
+    attrs:
+      branding_title: Hub

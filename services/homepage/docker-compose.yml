@@ -1,0 +1,17 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://192.168.0.25:514"
+        tag: "{{.Name}}"
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - /opt/homepage/config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: hub.vtmn.internal,localhost,127.0.0.1,192.168.0.56

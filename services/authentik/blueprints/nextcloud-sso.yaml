@@ -1,0 +1,32 @@
+version: 1
+metadata:
+  name: nextcloud-sso
+entries:
+  - model: authentik_providers_oauth2.oauth2provider
+    id: nextcloud-provider
+    identifiers:
+      name: Nextcloud
+    attrs:
+      client_type: confidential
+      client_id: nextcloud-vtmn
+      client_secret: ${NEXTCLOUD_OIDC_CLIENT_SECRET}
+      redirect_uris:
+        - matching_mode: strict
+          url: https://drive.vtmn.internal/apps/user_oidc/code
+        - matching_mode: strict
+          url: http://drive.local/apps/user_oidc/code
+        - matching_mode: strict
+          url: http://192.168.0.231:8443/apps/user_oidc/code
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      sub_mode: hashed_user_id
+      include_claims_in_id_token: true
+  - model: authentik_core.application
+    identifiers:
+      slug: nextcloud
+    attrs:
+      name: Nextcloud
+      provider: !KeyOf nextcloud-provider
+      policy_engine_mode: any
+      open_in_new_tab: false

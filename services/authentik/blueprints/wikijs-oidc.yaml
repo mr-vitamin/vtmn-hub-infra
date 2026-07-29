@@ -1,0 +1,28 @@
+version: 1
+metadata:
+  name: wikijs-oidc
+entries:
+  - model: authentik_providers_oauth2.oauth2provider
+    id: wikijs-provider
+    identifiers:
+      name: wikijs-oidc-provider
+    attrs:
+      client_type: confidential
+      client_id: wikijs-vtmn
+      client_secret: ${WIKIJS_OIDC_CLIENT_SECRET}
+      redirect_uris:
+        - matching_mode: regex
+          url: "^https://docs\\.vtmn\\.internal/login/.*/callback$"
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      sub_mode: hashed_user_id
+      include_claims_in_id_token: true
+
+  - model: authentik_core.application
+    identifiers:
+      slug: docs
+    attrs:
+      name: Docs
+      provider: !KeyOf wikijs-provider
+      policy_engine_mode: any

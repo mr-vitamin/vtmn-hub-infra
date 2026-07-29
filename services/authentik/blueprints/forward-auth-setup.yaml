@@ -1,0 +1,43 @@
+version: 1
+metadata:
+  name: forward-auth-setup
+entries:
+  - model: authentik_providers_proxy.proxyprovider
+    id: docs-provider-update
+    identifiers:
+      name: docs-proxy-provider
+    attrs:
+      mode: forward_single
+      external_host: https://docs.vtmn.internal
+      internal_host: http://192.168.0.176:3002
+      internal_host_ssl_validation: false
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
+  - model: authentik_providers_proxy.proxyprovider
+    id: snipeit-provider
+    identifiers:
+      name: snipeit-proxy-provider
+    attrs:
+      mode: forward_single
+      external_host: https://inventory.vtmn.internal
+      internal_host: http://192.168.0.175:8083
+      internal_host_ssl_validation: false
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
+  - model: authentik_core.application
+    identifiers:
+      slug: snipeit
+    attrs:
+      name: Snipe-IT
+      provider: !KeyOf snipeit-provider
+      policy_engine_mode: any
+
+  - model: authentik_outposts.outpost
+    identifiers:
+      name: authentik Embedded Outpost
+    attrs:
+      providers:
+        - !KeyOf docs-provider-update
+        - !KeyOf snipeit-provider

@@ -1,0 +1,11 @@
+version: 1
+metadata:
+  name: revert-docs-forward-auth
+entries:
+  - model: authentik_core.application
+    identifiers:
+      slug: docs
+    attrs:
+      name: Docs
+      provider: !Find [authentik_core.provider, [name, docs-proxy-provider]]
+      policy_engine_mode: any
