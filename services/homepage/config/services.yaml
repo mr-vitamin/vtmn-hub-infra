@@ -1,0 +1,25 @@
+- Core:
+    - Hub:
+        icon: mdi-view-dashboard
+        href: https://hub.vtmn.internal
+        description: Main dashboard
+
+    - Docs:
+        icon: mdi-book-open-page-variant
+        href: https://docs.vtmn.internal
+        description: Wiki / SOPs
+
+    - Inventory:
+        icon: mdi-archive
+        href: https://inventory.vtmn.internal
+        description: Asset tracking
+
+    - Drive:
+        icon: mdi-cloud
+        href: https://drive.vtmn.internal
+        description: File storage
+
+    - Auth:
+        icon: mdi-shield-key
+        href: https://auth.vtmn.internal
+        description: Identity system
