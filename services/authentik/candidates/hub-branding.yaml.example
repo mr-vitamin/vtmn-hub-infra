@@ -1,0 +1,11 @@
+version: 1
+metadata:
+  name: vtmn-branding-review
+  labels:
+    blueprints.goauthentik.io/instantiate: "false"
+entries:
+  - model: authentik_brands.brand
+    identifiers:
+      domain: authentik-default
+    attrs:
+      branding_title: Hub

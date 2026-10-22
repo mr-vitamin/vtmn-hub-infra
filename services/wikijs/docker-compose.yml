@@ -11,7 +11,7 @@ services:
     environment:
       POSTGRES_DB: wiki
       POSTGRES_USER: wiki
-      POSTGRES_PASSWORD: ${WIKIJS_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${WIKIJS_DB_PASSWORD:?WIKIJS_DB_PASSWORD must be set and nonempty}
     volumes:
       - /opt/wiki/db:/var/lib/postgresql/data
 
@@ -33,5 +33,5 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: wiki
-      DB_PASS: ${WIKIJS_DB_PASSWORD}
+      DB_PASS: ${WIKIJS_DB_PASSWORD:?WIKIJS_DB_PASSWORD must be set and nonempty}
       DB_NAME: wiki

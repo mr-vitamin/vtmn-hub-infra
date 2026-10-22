@@ -13,14 +13,14 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_KEY: ${SNIPEIT_APP_KEY}
+      APP_KEY: ${SNIPEIT_APP_KEY:?SNIPEIT_APP_KEY must be set and nonempty}
       APP_URL: https://inventory.vtmn.internal
       APP_TIMEZONE: America/Denver
       DB_CONNECTION: mysql
       DB_HOST: snipeit-db
       DB_DATABASE: snipeit
       DB_USERNAME: snipeit
-      DB_PASSWORD: ${SNIPEIT_DB_PASSWORD}
+      DB_PASSWORD: ${SNIPEIT_DB_PASSWORD:?SNIPEIT_DB_PASSWORD must be set and nonempty}
     depends_on:
       - snipeit-db
     volumes:
@@ -36,10 +36,10 @@ services:
         tag: "{{.Name}}"
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${SNIPEIT_DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${SNIPEIT_DB_ROOT_PASSWORD:?SNIPEIT_DB_ROOT_PASSWORD must be set and nonempty}
       MYSQL_DATABASE: snipeit
       MYSQL_USER: snipeit
-      MYSQL_PASSWORD: ${SNIPEIT_DB_PASSWORD}
+      MYSQL_PASSWORD: ${SNIPEIT_DB_PASSWORD:?SNIPEIT_DB_PASSWORD must be set and nonempty}
     volumes:
       - snipeit_db:/var/lib/mysql
 
