@@ -1,19 +1,39 @@
-# Per-App Operator Permissions
+# Per-application Operator permissions
 
-Wiki.js and Snipe-IT store permissions in their own databases rather than files, so there's nothing to version-control directly — this documents the setup for reproducibility.
+**Intended process, reviewed October 22, 2026; server unavailable.** No accounts, grants or database state were inspected or changed. Exact installed labels/keys and current effective memberships remain unknown.
 
-## Wiki.js
+The authoritative intended model is NPM/Authentik forward-auth followed by local Wiki.js and Snipe-IT users. Proxy admission and application permissions are separate. Historical Wiki.js OIDC/self-registration/group-mapping instructions are not prerequisites of this model; reconcile conflicting strategies before any approved change. See [application operations](../docs/APPLICATION-OPERATIONS.md).
 
-1. **Admin → Groups → New Group**, name it exactly `operators` (lowercase — Authentik's group is also lowercase, and group-name mapping is case-sensitive)
-2. In its Page Rules: grant Read, Write, Comment on `/` and below. Do **not** grant "Manage" (that's admin-level)
-3. **Admin → Login → your OIDC/Login strategy → Map Groups**: toggle on. This auto-assigns anyone whose identity provider `groups` claim includes `operators` into this Wiki.js group on login
-4. Also enable **selfRegistration** on the strategy, or new SSO identities can't get a Wiki.js account created automatically on first login
+## Wiki.js — owner-managed local users
 
-## Snipe-IT
+Using the installed release's supported administration UI, inventory existing local/provider identities, groups and guest access first. Preserve owner recovery and content; do not convert or duplicate an existing OIDC account automatically.
 
-New users created via **Admin → Users → New User** default to a permission template that may have every permission unchecked (effectively a useless account that can't even view assets). The Operator-appropriate permission set used in this build:
+For a new approved Operator, create a local identity and assign the intended operators application group. Grant both the necessary global content permissions and page rules for the approved scope; page rules alone do not grant globally disabled capabilities. Intended actions are read, write and comment, with asset access only where needed and reviewed. Do not grant administrative/manage/users/groups/settings capabilities or broad deletion rights.
 
-- **Granted**: view/create/edit/checkin/checkout on assets, accessories, consumables, licenses, components; view-only on categories, departments, status labels, suppliers, manufacturers, locations, companies, models; reports.view
-- **Denied**: delete on anything; all of users.*, customfields.*, depreciations.*; admin/superuser flags
+The historical scope was the whole wiki; confirm that choice before recreating it. Check the installed rule semantics for the site root, descendants, assets and language paths instead of assuming a literal slash matches everything. Inventory Guest permissions and overlapping group memberships. Matching an Authentik group name does not synchronize membership or enforce authorization.
 
-This was applied directly via a SQL `UPDATE users SET permissions = '<json>' WHERE username IN (...)` rather than the UI, since Snipe-IT's permission JSON has ~90 individual keys and the UI has no bulk-apply. If recreating from scratch, either build the permission JSON by hand (see Snipe-IT's own docs for the full key list) or use their user-import/API to script it — don't rely on whatever the "New User" form defaults to without checking.
+Use [Wiki.js users/groups guidance](https://docs.requarks.io/groups) for the matching version. Test one allowed page edit/comment and one denied out-of-scope/admin/delete action with an actual test account before calling the role verified. Do not enable self-registration or OIDC mapping to bypass a failed local-account setup.
+
+## Snipe-IT — capability template, not invented permission JSON
+
+Historical intent below is a capability checklist, not an export of installed permissions or a complete API payload. Map it to the selected version's supported UI/API only after reviewing actual keys and relationships.
+
+| Resource | Intended Operator capabilities |
+|---|---|
+| Assets, accessories, consumables, licenses, components | View/create/edit and relevant check-in/check-out actions where the resource supports them. |
+| Categories, departments, status labels, suppliers, manufacturers, locations, companies, models | View only. |
+| Reports | View only, after reviewing data scope. |
+| All resources | No delete. |
+| Users, custom fields, depreciation management, app administration | No management access; no Admin or Superadmin flag. |
+
+Prefer supported permission groups and assign local users to a reviewed Operator group. Inspect individual overrides, all other memberships, company scope and admin flags; a restrictive group does not undo an independent privileged grant. Keep the original SNIPEIT_APP_KEY with the database.
+
+[Vendor user guidance](https://snipe-it.readme.io/docs/managing-users) recommends permission groups. Historical direct SQL is reference history only; no SQL UPDATE, handwritten guessed JSON or assumed “90 keys” is a reproducible procedure. Version-specific exported payloads must be sanitized and reviewed before a future automation change. Exact numeric/boolean keys are deliberately not invented here.
+
+## Positive/negative verification and offboarding
+
+Pending tests: Wiki content read/edit/comment within approved scope; denied delete/admin/user/group changes. Snipe supported inventory operations and reference-data view; denied deletes, reference modification, user management and admin access. Test reports/company scope and UI/API behavior where relevant, not just a hidden menu.
+
+Offboarding requires disabling/revoking the IdP admission **and** both local app identities/sessions/API tokens as supported, plus Nextcloud sessions/shares/tokens when granted. Do not assume disabling Authentik invalidates existing app-local sessions. Reconcile asset ownership/shares and retention with the owner; do not automatically delete users or their content. Confirm denial from fresh and existing-session paths while preserving owner recovery.
+
+These are intended permissions and acceptance steps, not verified enforcement. No group/policy/key or data change is implemented.
