@@ -1,11 +1,11 @@
 # VTMN Hub — Infrastructure Reference
 
-Last updated: 2026-07-28
+Historical reference date: 2026-07-28. Source corrections reviewed October 22, 2026 with the server off; no current installed version, account, address or service is verified. Linked scripts and historical instructions are not a validated rebuild procedure.
 
 ## Proxmox Host
 
 - Address: `192.168.0.50` (web UI port 8006)
-- Version: Proxmox VE 9.1.0+, kernel 6.17.x
+- Historical version description: Proxmox VE 9.1.0+, kernel 6.17.x; no exported installed inventory is available to confirm these now.
 - Hardware: ASUS desktop board, 4 cores, 15GB RAM
 - Network: `vmbr0` bridged to `nic0`, static `192.168.0.50/24`, gateway `192.168.0.1`
 
@@ -19,6 +19,8 @@ Last updated: 2026-07-28
 
 ## Containers
 
+The table records historical addresses and service intent; it is not a current inventory or evidence of fixed DHCP reservations.
+
 | VMID | Name | IP | Services | Ports | Compose file (this repo) |
 |---|---|---|---|---|---|
 | 101 | wikijs | 192.168.0.176 | Wiki.js + Postgres | 3002 | `services/wikijs/docker-compose.yml` |
@@ -30,13 +32,13 @@ Last updated: 2026-07-28
 | 107 | syslog | 192.168.0.25 | rsyslog (centralized logging) | 514 udp/tcp | `services/syslog/10-remote.conf` |
 | 108 | dns | 192.168.0.194 | dnsmasq (internal DNS) | 53 | `services/dns/dnsmasq.conf` |
 
-All containers are Debian 12 LXC, unprivileged, `nesting=1,keyctl=1` (required for Docker-in-LXC).
+Provisioning defines eight unprivileged Debian 12 LXCs with DHCP on vmbr0. Only 101-106 specify `nesting=1,keyctl=1` for their Docker workloads; DNS 108 and syslog 107 have direct Linux setup scripts. These are source definitions, not verified running guest settings.
 
 ## Domain & TLS
 
-- Internal-only domain: `*.vtmn.internal`, resolved via container 108 (dnsmasq → NPM's IP for the wildcard)
+- Intended LAN-only domain: `*.vtmn.internal`, resolved via container 108 (dnsmasq → NPM's IP for the wildcard)
 - HTTPS via an internal CA (root cert generated once, installed on client devices' trust stores; wildcard cert issued for `*.vtmn.internal` and uploaded to NPM as a Custom Certificate)
-- **NPM (105) is the front door.** Admin UI: `https://192.168.0.31:81`
+- **NPM (105) is the documented front door.** Compose publishes administration port 81; an HTTPS management listener is not established by the committed configuration. Verify the actual scheme and management access separately.
 
 ## NPM Proxy Routes
 
@@ -48,30 +50,42 @@ All containers are Debian 12 LXC, unprivileged, `nesting=1,keyctl=1` (required f
 | `inventory.vtmn.internal` | 192.168.0.175:8083 | Forward-auth |
 | `drive.vtmn.internal` | 192.168.0.231:8443 | Native OIDC (Nextcloud `user_oidc` app) |
 
-Forward-auth nginx snippets live in `services/npm/nginx-snippets/` — pasted into each proxy host's "Advanced" tab in the NPM UI (NPM doesn't expose this via docker-compose directly).
+The NPM files in services/npm/nginx-snippets/ are complete historical exports with map/server configuration contexts, not paste-ready Advanced snippets. Auth and drive exports are missing. Read the [NPM context guide](../services/npm/README.md) and [application operations](APPLICATION-OPERATIONS.md); do not apply full exports.
 
 ## Identity (Authentik)
 
+**Integrated source proposal:** The historical/candidate identity layout is separated locally; see [Authentik configuration guidance](../services/authentik/README.md). The server is unavailable and applied identity state is unverified. Historical inputs are outside the discovery mount; review-only candidates are not ready for deployment.
+
 - Groups: `owners` (Owner/Admin), `operators` (Operators), plus Authentik's built-in `authentik Admins` (break-glass superuser only, not for daily use)
-- SSO integration:
-  - **Nextcloud**: native OIDC — see `services/authentik/blueprints/nextcloud-sso.yaml`
-  - **Wiki.js, Snipe-IT, Homepage**: forward-auth via Authentik's embedded proxy outpost — see `services/authentik/blueprints/forward-auth-setup.yaml` and `homepage-forward-auth.yaml`. These apps still need their own separate local accounts for individual users (forward-auth gates network access, not per-app identity).
-- Blueprints are applied via `ak apply_blueprint <path>` inside the Authentik server container, or automatically picked up from `/blueprints/local` (bind-mounted from `./blueprints/local` in the compose file) on Authentik's periodic discovery cycle.
+- Intended SSO integration recorded by the original reference:
+  - **Nextcloud**: native OIDC. Provider-side configuration and supported secret injection require the installed-version gate; application-side user_oidc setup remains unverified.
+  - **Wiki.js and Snipe-IT**: Authentik forward-auth plus separate local application accounts and permissions.
+  - **Homepage**: Authentik forward-auth; no individual Homepage account is defined here.
+- [Historical blueprints](../services/authentik/history/README.md) preserve previous OIDC/forward-auth transitions unchanged. Do not import them as a set.
+- [Review-only identity candidates](../services/authentik/README.md) consolidate the three proxy applications/providers and one embedded-outpost assignment. Compose still mounts only blueprints/local; that directory intentionally has no project YAML pending compatibility and migration review.
+- See [application operations](APPLICATION-OPERATIONS.md) and [local app permissions](../scripts/configure-app-permissions.md) for version-gated setup and independent authorization checks. No MFA, group policy or user migration is applied here.
+- Determine the actual server/worker release and existing blueprint instances before selecting a supported import/instance procedure. Do not rely on discovery order or infer group/MFA enforcement from these files.
 
 ## Backups
 
-- Scheduled job: daily at 02:00, all 8 containers, mode snapshot, compressed (zstd), stored on `backup-tank`
+- Documented job definition: daily at 02:00, all 8 containers, mode snapshot, compressed (zstd), stored on `backup-tank`
 - Retention: 7 daily + 4 weekly
-- A test restore has been performed and verified data integrity (see project history — not automated, should be repeated periodically)
+- Historical documentation reports a successful restore, but no dated archive/service/check record is committed; this is not current recovery verification.
+- `backup-tank` shares `tank` with service data. See the [backup and disaster-recovery plan](BACKUP-RECOVERY-PLAN.md) for a proposed independent encrypted copy, coverage inventory and isolated restore/host-loss checklist. No new destination or restore has been implemented; server unavailable as of October 22, 2026.
 
 ## Centralized Logging
 
-- All 6 service containers ship Docker container logs via the `syslog` logging driver to container 107 (rsyslog), organized under `/var/log/remote/<hostname>/<container>.log`
-- Operators have no access to this container — it's Proxmox/Owner-only infrastructure
+- All six service Compose stacks configure Docker syslog over UDP to `192.168.0.25:514`, tagged with the container name. Actual delivery and runtime sender identity are unverified while the server is off (October 22, 2026).
+- The receiver template uses `/var/log/remote/%HOSTNAME%/%PROGRAMNAME%.log`; effective parsing, source attribution, local-versus-remote routing and permissions require verification. Restricted owner access is the documented intent, not demonstrated tamper resistance.
+- See the [logging and lightweight monitoring plan](LOGGING-MONITORING-PLAN.md) for proposed source restrictions, remote-input ruleset, transport/rotation/capacity decisions, readiness checks and owner alerts. No monitoring platform or live configuration is deployed by that plan.
 
 ## Known Open Items
 
-1. Proxmox firewall is enabled but set to a permissive default policy (not actively blocking) — flipping to enforce needs to be done deliberately, at the console, to avoid remote lockout risk
-2. Authentik is running an older version — a planned upgrade (with a fresh backup first) is still pending
-3. No real public domain — everything is internal-only (`*.vtmn.internal`) by design
-4. DNS resolution and CA trust are currently only configured on the Owner's own device — other devices/operators need the same setup (router DHCP DNS pointed at 192.168.0.194, and the CA root cert installed) before they can reach the platform by hostname over HTTPS
+1. Historical firewall notes describe permissive defaults, not a current effective ruleset or proof that nothing is blocked. Any enforcement requires a separate network plan and verified independent console recovery.
+2. Historical notes call Authentik older without an exact installed release; inventory, compatible migration/recovery planning and approval are required before upgrading. No upgrade or Redis removal is implemented. See the [version inventory and change gates](VERSION-MANAGEMENT.md).
+3. No public-domain deployment is represented — LAN-only access is the intent (`*.vtmn.internal`) by design
+4. Historical notes report DNS/CA enrollment only on the owner's device. Actual resolver distribution, CA trust and client enrollment are unverified; confirm addresses and trust before any approved onboarding.
+
+## Integrated planning references
+
+Read the [network access plan](NETWORK-SECURITY-PLAN.md), [CA custody/initialization guide](INTERNAL-CA.md), [governance recommendations](GITHUB-GOVERNANCE.md) and [portfolio evidence strategy](PORTFOLIO-EVIDENCE.md) alongside the source. These plans do not apply controls or establish runtime correctness. Homepage socket removal is deliberately deferred; see its [capability gate](../services/homepage/README.md).

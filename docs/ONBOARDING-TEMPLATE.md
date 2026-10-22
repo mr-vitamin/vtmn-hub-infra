@@ -1,24 +1,39 @@
-# Operator Onboarding Template
+# Operator onboarding and offboarding template
 
-Copy this section per new user. Do not commit filled-in copies containing real reset links or tokens to this repo — keep those in a password manager or deliver directly and discard.
+**Unfilled planning template — October 22, 2026.** Keep completed user identities, reset links, tokens and recovery details outside this public repository. Nothing below asserts that MFA, provisioning or permission checks have been completed.
 
-## [Name] (Operator)
+## Approval and account record
 
-| Field | Value |
+| Field | Private record to complete after approval/verification |
 |---|---|
-| Role | Operator |
-| Authentik account | username / email — group: `operators`. 2FA enrolled? Y/N |
-| Wiki.js account | username / email — group: `operators` (read/write/comment, no admin) |
-| Snipe-IT account | username / email — Operator permission set (view/create/edit/checkin/checkout on assets, accessories, consumables, licenses, components; no delete, no user/admin access) |
-| Nextcloud account | Auto-provisions via SSO on first login — no separate creation needed |
-| Homepage | No individual account needed (SSO-gated only) |
-| Services granted | Homepage, Wiki.js, Snipe-IT, Nextcloud |
-| Approved by | |
-| Account created by | |
-| Onboarding completed | Date, once first login confirmed on all systems |
+| Person / owner approval / scope | Approved services and application role; do not grant every service by default. |
+| Authentik identity | Actual username/group, applied admission policy and verified MFA enrollment; group-name presence alone is not enforcement. |
+| Wiki.js | Separate local identity/group/page scope under the intended forward-auth model; no automatic OIDC mapping assumed. |
+| Snipe-IT | Separate local identity with reviewed Operator permission group and no privileged/individual override. |
+| Nextcloud | Existing linked identity or verified user_oidc provisioning decision. Automatic first-login creation is not assumed; confirm allowed/denied behavior. |
+| Homepage | No separate individual account in this design; verify intended proxy gate and direct-backend restriction. |
+| Created/reviewed by | Actual owner names and dates, kept privately. |
+| Acceptance | Record actual allowed/denied and existing-session results for each granted service. |
+| Recovery | Secure delivery channel and location of owner recovery instructions; never paste recovery secrets here. |
 
-**Delivery checklist** (deliver securely, never over an insecure public channel):
-- [ ] Authentik recovery link
-- [ ] Wiki.js password
-- [ ] Snipe-IT password reset link
-- [ ] Confirm 2FA enrollment after first login
+Use the [application operations guide](APPLICATION-OPERATIONS.md) and [permission capability checklist](../scripts/configure-app-permissions.md) for setup boundaries.
+
+## Secure delivery and acceptance
+
+- [ ] Owner approval and requested scope recorded.
+- [ ] Existing identities reviewed to prevent duplicate/linking mistakes.
+- [ ] IdP enrollment/reset material delivered through an approved secure channel.
+- [ ] Separate Wiki.js/Snipe-IT enrollment/reset material delivered only if those apps are granted.
+- [ ] MFA policy/enrollment actually verified, not merely marked required.
+- [ ] Each granted service passes its intended positive and negative permission checks.
+- [ ] Nextcloud provisioning/linking, cron-independent access and ownership/shares checked where applicable.
+- [ ] Offboarding responsibility, session/token coverage and recovery recorded.
+
+## Offboarding
+
+- [ ] Owner approves timing and preservation/transfer of required records/assets/shares.
+- [ ] Revoke IdP admission and relevant sessions through supported mechanisms.
+- [ ] Disable app-local Wiki.js/Snipe-IT access and relevant sessions/API tokens separately.
+- [ ] Review Nextcloud account, sessions/app passwords/tokens/shares and device access.
+- [ ] Verify denial from fresh and previously established paths; preserve owner recovery.
+- [ ] Record evidence privately; do not delete user data automatically.
